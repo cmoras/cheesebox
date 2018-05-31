@@ -48,31 +48,43 @@ function check_user()
 {
 #checking whether the user actually exists.
 if [[ -f /var/cpanel/users/$user ]]; then 
-	user_exist=$(cat /etc/passwd | grep $user)
+	user_exist=$(cat /etc/passwd | grep $user);
+	user_path=$(cat /etc/passwd | grep $user |awk -F: '{print $6}');
 	if [[ ! -z "$user_exist" ]]; then 
-		echo "USer : $user does not exist in this system."
+		echo "User : $user does not exist in this system."; exit 0;
 else
-	echo "$user is not a cpanel user."
+	echo "$user is not a cpanel user."; exit 0;
 }
 
 function check_error()
 {
 ##check existences of certain files and what needs to be present"
-if [[ ! -f /etc/apache2/.htpasswd ]];then
-	echo "[+].htpasswd file present, needs to be created."
-	if [[ ! -f /etc/apache2/.htaccess ]]; then
-		echo "[+].htaccess is not presnet, need to be created."
+if [[ ! -f $user_path/.htpasswd ]];then
+	echo "[+].htpasswd file present."
+	echo "[+]Creating the .htpasswd file ."
+	touch $user_path/.htpasswd;
+	if [[ ! -f $user_path.htaccess ]]; then
+		echo "[+].htaccess is not present."
+		echo "[+]Creating the .htaccess fle in the path."
+		touch $user_path/.htaccess;
 	fi
 fi
-#this 
+}
+
+function check_immutable()
+{
+#this is to set/unset the restrictions on the account.
+
 chwd=$(lsattr /etc/apache2/.htpasswd | awk '{print $1}'| grep -o "ia");
 
+chcs=$(lsattr /etc/apache2/.htaccess | awk '{print $1}'| grep -o "ia");
+
+if [[ $restrict == "1" ]]; then 
+	if [[ -z $chwd && -z $chcs ]]; then
 
 echo "number of parameters : "
 echo $#
 
-sep="----------------------------";
-echo $sep;
 #echo "the second one is  $2"
 #while test $# -gt 0;
 while getopts ":h:a:*" opt;
@@ -85,12 +97,14 @@ do
 			exit 0;
 			;;
 
-		a)
+		a)	
+			restrict=1;
 			if [[ $3 == "http" ]];then
 				user=$2;
 				service=$3;
 				check_user
-				restrict_user
+				check_error
+				check_immutable $restrict
 			elif  [[ $3 == "exim" ]]; then
 				user=$2;
                                 service=$3;
