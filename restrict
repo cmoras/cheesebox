@@ -43,6 +43,17 @@ function pu ()
 echo "1st arg =" $user
 }
 
+function check_user()
+{
+#checking whether the user actually exists.
+if [[ -f /var/cpanel/users/$user ]]; then 
+        user_exist=$(cat /etc/passwd | grep $user)
+        if [[ ! -z "$user_exist" ]]; then 
+                echo "USer : $user does not exist in this system."
+else
+        echo "$user is not a cpanel user."
+}
+
 
 echo "number of parameters : "
 echo $#
