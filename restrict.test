@@ -55,9 +55,18 @@ else
 	echo "$user is not a cpanel user."
 }
 
-function restrict_user()
+function check_error()
 {
-##start restricting the user
+##check existences of certain files and what needs to be present"
+if [[ ! -f /etc/apache2/.htpasswd ]];then
+	echo "[+].htpasswd file present, needs to be created."
+	if [[ ! -f /etc/apache2/.htaccess ]]; then
+		echo "[+].htaccess is not presnet, need to be created."
+	fi
+fi
+#this 
+chwd=$(lsattr /etc/apache2/.htpasswd | awk '{print $1}'| grep -o "ia");
+
 
 echo "number of parameters : "
 echo $#
@@ -92,6 +101,7 @@ do
                                 service=$3;
                                 check_user
                                 restrict_user
+			fi
 			;;
 		*)
 			echo "This is a catch -all scenario"
