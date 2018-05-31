@@ -1,0 +1,105 @@
+#!/bin/bash
+
+function man_page ()
+  { # Begin man page
+  cat<< EOF
+  NAME
+       restrictaccess by Clen
+  SYNOPSYS
+       acctpasswd [options] USERNAME
+  DESCRIPTION
+       This script was designed to automatically create and remove .htaccess
+       and .htpasswd restrictions which are in place due to Abuse or Legal
+       department tickets.
+       This is done by creating new or appending to existing .htaccess and
+       .htpasswd files in the users home directory.
+  OPTIONS
+       -a CPANEL_USERNAME
+            Add restrictions to specified USERNAME
+       -r CPANEL_USERNAME
+            Remove restrictions from specified USERNAME
+       -c CPANEL_USERNAME
+            Check for restrictions in place for USERNAME
+       -h
+            Displays this man page.
+  Exiting.
+
+
+EOF
+} # End man page
+
+
+function usage()
+{
+echo "this is help section"
+echo "the is is the second line int he help section"
+echo " -h for this one"
+echo "-a for something lese"
+echo "-d for next one"
+}
+
+function pu ()
+{
+echo "1starg =" $user
+echo "dotyou :" $display_help
+}
+
+function check_user()
+{
+#checking whether the user actually exists.
+if [[ -f /var/cpanel/users/$user ]]; then 
+	user_exist=$(cat /etc/passwd | grep $user)
+	if [[ ! -z "$user_exist" ]]; then 
+		echo "USer : $user does not exist in this system."
+else
+	echo "$user is not a cpanel user."
+}
+
+function restrict_user()
+{
+##start restricting the user
+
+echo "number of parameters : "
+echo $#
+
+sep="----------------------------";
+echo $sep;
+#echo "the second one is  $2"
+#while test $# -gt 0;
+while getopts ":h:a:*" opt;
+do
+	case $opt in
+		h)
+			man_page
+			display_help=$OPTARG
+			pu $display_help
+			exit 0;
+			;;
+
+		a)
+			if [[ $3 == "http" ]];then
+				user=$2;
+				service=$3;
+				check_user
+				restrict_user
+			elif  [[ $3 == "exim" ]]; then
+				user=$2;
+                                service=$3;
+                                check_user
+                                restrict_user
+			else [[ $3  == "ftp" ]]; then
+				user=$2;
+                                service=$3;
+                                check_user
+                                restrict_user
+			;;
+		*)
+			echo "This is a catch -all scenario"
+			echo "Your formatting was not correct"
+			man_page
+			usage
+			;;
+	esac
+echo $display_help
+done
+#echo $display_help
