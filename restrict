@@ -1,0 +1,74 @@
+#!/bin/bash
+
+function man_page ()
+  { # Begin man page
+  cat<< EOF
+  NAME
+       restrictaccess by Clen
+  SYNOPSYS
+       acctpasswd [options] USERNAME
+  DESCRIPTION
+       This script was designed to automatically create and remove .htaccess
+       and .htpasswd restrictions which are in place due to Abuse or Legal
+       department tickets.
+       This is done by creating new or appending to existing .htaccess and
+       .htpasswd files in the users home directory.
+  OPTIONS
+       -a CPANEL_USERNAME
+            Add restrictions to specified USERNAME
+       -r CPANEL_USERNAME
+            Remove restrictions from specified USERNAME
+       -c CPANEL_USERNAME
+            Check for restrictions in place for USERNAME
+       -h
+            Displays this man page.
+  Exiting.
+
+  
+EOF
+} # End man page
+
+
+function usage()
+{
+echo "this is help section"
+echo "the is is the second line int he help section"
+echo " -h for this one"
+echo "-a for something lese"
+echo "-d for next one"
+}
+
+function pu ()
+{
+echo "1st arg =" $user
+}
+
+
+echo "number of parameters : "
+echo $#
+
+sep="----------------------------";
+echo $sep;
+echo "the second one is  $2"
+#while test $# -gt 0;
+while getopts "ha:" opt;
+do
+	case $opt in
+		h)
+			man_page
+			exit 0;
+			;;
+
+		a)
+			if [[ $1 != "-a" ]]; then
+				usage;
+			else 
+				user=$2;
+				user1=$3;
+				pu $user
+			fi
+			echo "1st arg =" $user
+			echo "2nd arg =" $user1
+			;;
+	esac
+done
