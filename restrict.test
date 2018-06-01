@@ -1,5 +1,7 @@
 #!/bin/bash
-
+#global_vars
+user_path=$(cat /etc/passwd | grep $user |awk -F: '{print $6}');
+#functions
 function man_page ()
   { # Begin man page
   cat<< EOF
@@ -49,7 +51,6 @@ function check_user()
 #checking whether the user actually exists.
 if [[ -f /var/cpanel/users/$user ]]; then 
 	user_exist=$(cat /etc/passwd | grep $user);
-	user_path=$(cat /etc/passwd | grep $user |awk -F: '{print $6}');
 	if [[ ! -z "$user_exist" ]]; then 
 		echo "User : $user does not exist in this system."; exit 0;
 else
@@ -71,14 +72,50 @@ if [[ ! -f $user_path/.htpasswd ]];then
 fi
 }
 
-function check_immutable()
+#function check_immutable()
+function set_restrict()
 {
 #this is to set/unset the restrictions on the account.
+if [[ -f $user_file/.immut_lock ]];then 
+	chwd=$(lsattr $user_path.htpasswd | awk '{print $1}'| grep -o "ia");
+	chcs=$(lsattr $user_path.htaccess | awk '{print $1}'| grep -o "ia");
+		if [[ -z $chwd  && -z $chcs ]];then
+			have_i_set=$(cat $user_path/.htpasswd | grep "ABUSE RESTRICTIONS")
+			if [[ -z $have_i_set ]]; then
+				echo "[!!]Lock file exists, immutable flags set. Restrictions Active. Nothing to Do here."
+			else
+				echo "[!!]Lock file exists. immutable flags set. Restrictions NOT present."
+				abuse=1;
+			fi
+		else
+			echo "[!!]Lock file exists,  but issues with immutable flags. Manual intervention required."
+			echo "[!!]More details :"
+			echo "[*]Immutable flags on  htpasswd : $chwd"
+			echo "[*]Immutable flags on  htpasswd : $chcs"
+			immut=1;
+		fi
+else
+	echo "[!!]NO lock file is present. Do not make any changes.  Manual Intervention Required."
+	lock=1;
+fi
+}
 
-chwd=$(lsattr /etc/apache2/.htpasswd | awk '{print $1}'| grep -o "ia");
+function set_restrict()
+{
+if  [[ -z $abuse && -z $immut && -z $lock ]]; then 
+	htpasswd $user_path/.htpasswd 
+	printf "$htpu:$htpws::ABUSE RESTRICTIONS - TICKET $tid\n" >> /home/${user}/.htpasswd
+	printf "%s\n" "######### ABUSE RESTRICTIONS ######### TICKET $tid" >> /home/${user}/.htaccess
+  	printf "%s\n" "AuthType Basic" >> /home/${user}/.htaccess
+  	printf "%s\n" "AuthName \"Restricted\"" >> /home/${user}/.htaccess
+  	printf "%s\n" "AuthUserFile $user_path/.htpasswd" >> /home/${user}/.htaccess
+  	printf "%s\n" "Require valid-user" >> /home/${user}/.htaccess
+  	printf "%s\n" "######### ABUSE RESTRICTIONS ######### TICKET $tid" >> /home/${user}/.htaccess
+  	chattr +ia /home/${user}/.htaccess
+  	chattr +ia /home/${user}/.htpasswd
+}
 
-chcs=$(lsattr /etc/apache2/.htaccess | awk '{print $1}'| grep -o "ia");
-
+gen_passwd
 if [[ $restrict == "1" ]]; then 
 	if [[ -z $chwd && -z $chcs ]]; then
 
@@ -104,12 +141,11 @@ do
 				service=$3;
 				check_user
 				check_error
-				check_immutable $restrict
+				set_restrict $restrict $user_path
 			elif  [[ $3 == "exim" ]]; then
 				user=$2;
                                 service=$3;
                                 check_user
-                                restrict_user
 			else [[ $3  == "ftp" ]]; then
 				user=$2;
                                 service=$3;
