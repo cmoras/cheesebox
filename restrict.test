@@ -72,7 +72,7 @@ if [[ ! -f $user_path/.htpasswd ]];then
 fi
 }
 
-function set_restrict()
+function check_immutable()
 {
 #this is to set/unset the restrictions on the account.
 if [[ -f $user_file/.immut_lock ]];then 
@@ -130,10 +130,6 @@ if [[ $abuse == "1" &&  $immut == "1" && $lock == "1"]]; then
 	echo "[+]Restrictions removed."
 }
 
-gen_passwd
-if [[ $restrict == "1" ]]; then 
-	if [[ -z $chwd && -z $chcs ]]; then
-
 echo "number of parameters : "
 echo $#
 
@@ -149,14 +145,15 @@ do
 			exit 0;
 			;;
 
-		a)	
+		a)
 			restrict=1;
 			if [[ $3 == "http" ]];then
 				user=$2;
 				service=$3;
 				check_user
 				check_error
-				set_restrict $restrict $user_path
+				check_immutable
+				set_restrict $user_path
 			elif  [[ $3 == "exim" ]]; then
 				user=$2;
                                 service=$3;
@@ -168,6 +165,19 @@ do
                                 restrict_user
 			fi
 			;;
+		r)
+			if [[ $3 == "http" ]];then
+				user=$2;
+				service=$3;
+				check_user
+				check_error
+				check_immutable
+				remove _restrict $user_path
+			elif [[ $3 == "exim" ]];then 
+				user=$2;
+				service =$3;
+				
+
 		*)
 			echo "This is a catch -all scenario"
 			echo "Your formatting was not correct"
